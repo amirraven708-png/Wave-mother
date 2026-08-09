@@ -18,7 +18,7 @@ jobs:
 
     - name: Build Dreamland
       run: |
-        gcc -Wall -O2 -std=c11 -Icore/include \
+        gcc -Wall -O2 -std=c11 -D_GNU_SOURCE -Icore/include \
           -o core/bin/test_dreamland_full \
           core/src/dreamland.c core/src/dreamland_wish.c core/src/dreamland_resonance.c \
           core/src/wave_index.c core/src/test_dreamland_full.c -lm
