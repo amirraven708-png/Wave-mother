@@ -9,3 +9,16 @@ logs/
 licenses/
 data/generated/
 data/sites/
+
+# Runtime
+*.log
+logs/
+
+# Bench results
+*.csv
+
+# Binaries
+wave_host
+wave_tool
+final_benchmark*
+fair_compare
