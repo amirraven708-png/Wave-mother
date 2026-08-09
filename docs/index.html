@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave Mother – Decentralized Hosting</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a1a; color: #e0e0e0; padding: 40px; text-align: center; }
+        h1 { color: #00dcff; font-size: 2.5em; margin-bottom: 10px; }
+        .tagline { color: #888; font-size: 1.2em; margin-bottom: 40px; }
+        .card { background: #111; border: 1px solid #222; border-radius: 12px; padding: 30px; margin: 20px auto; max-width: 600px; text-align: left; }
+        .card h2 { color: #00dcff; margin-bottom: 15px; }
+        .card p { color: #aaa; margin: 10px 0; }
+        .btn { display: inline-block; background: #00dcff; color: #000; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; margin: 10px; }
+        .btn:hover { background: #00b0d0; }
+        .status { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+        .live { background: #00ff9d; }
+        .offline { background: #ff4444; }
+        code { background: #222; padding: 2px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🌊 Wave Mother</h1>
+    <p class="tagline">The first decentralized hosting platform without servers</p>
+
+    <div class="card">
+        <h2>🚀 Live Demo</h2>
+        <p><span class="status live"></span> <strong>Wave Host is running!</strong></p>
+        <p>Create your own website in seconds:</p>
+        <code>curl -X POST [NGROK_URL]/create -d 'subdomain=mysite&html=&lt;h1&gt;Hello Wave&lt;/h1&gt;'</code>
+        <p style="margin-top:15px;"><a href="#" class="btn" id="live-link" target="_blank">Open Wave Host →</a></p>
+    </div>
+
+    <div class="card">
+        <h2>📊 Benchmarks</h2>
+        <p>✅ <strong>174x faster</strong> than linear scan (1M traces)</p>
+        <p>✅ <strong>5.7 ms insert</strong> for 100,000 records</p>
+        <p>✅ <strong>4.55 ms phase retrieval</strong> (unique capability)</p>
+        <p>✅ <strong>90 C source files</strong>, 17 benchmark logs</p>
+    </div>
+
+    <div class="card">
+        <h2>🔗 Quick Links</h2>
+        <p><a href="https://github.com/amirraven708-png/Wave-mother" class="btn">GitHub Repository</a></p>
+        <p><a href="https://github.com/amirraven708-png/Wave-mother/blob/main/docs/whitepaper.md" class="btn">White Paper</a></p>
+    </div>
+
+    <p style="margin-top:40px; color:#555;">Powered by Wave Mother | Running on Termux (Android)</p>
+</body>
+</html>
