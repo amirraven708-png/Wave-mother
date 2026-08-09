@@ -3,25 +3,16 @@
 *.so
 *.pid
 *.log
+*.cast
 core/bin/*
 !core/bin/.gitkeep
 logs/
 licenses/
 data/generated/
-data/sites/
-
-# Runtime
-*.log
-logs/
-
-# Bench results
-*.csv
-
-# Binaries
-wave_host
-wave_tool
-final_benchmark*
-fair_compare
+data/sites/*
+!data/sites/.gitkeep
 test_dreamland
 test_manifest
 test_mesh
+cloudflared
+cloudflared-linux-arm64
