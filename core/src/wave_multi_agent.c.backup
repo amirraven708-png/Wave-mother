@@ -1,0 +1,352 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include "wave_multi_agent.h"
+
+static void simulate_decision(
+    agent_decision_t d,
+    double *coh,
+    double *res,
+    int secret_best)
+{
+    double dc, dr;
+
+    if ((d == DECISION_A && secret_best == 0) ||
+        (d == DECISION_B && secret_best == 1))
+    {
+        dc = 0.15 + (rand() % 100) * 0.001;
+        dr = 0.5 + (rand() % 50) * 0.01;
+    }
+    else
+    {
+        dc = -0.05 + (rand() % 100) * 0.001;
+        dr = 2.0 + (rand() % 100) * 0.01;
+    }
+
+    *coh += dc;
+    *res += dr;
+
+    if (*coh > 1.0) *coh = 1.0;
+    if (*coh < 0.0) *coh = 0.0;
+}
+
+void mas_init(
+    multi_agent_system_t *sys,
+    double coherence_goal)
+{
+    memset(sys, 0, sizeof(*sys));
+    sys->coherence_goal = coherence_goal;
+}
+
+void mas_add_two_agents(multi_agent_system_t *sys)
+{
+    if (sys->agent_count + 2 > MAX_AGENTS)
+        return;
+
+    for (int i = 0; i < 2; i++)
+    {
+        wave_agent_t *a =
+            &sys->agents[sys->agent_count++];
+
+        a->id = sys->agent_count;
+        a->reward = 0.0;
+        a->resource_usage = 0.0;
+        a->decisions_made = 0;
+        a->last_decision = DECISION_A;
+    }
+}
+
+void mas_run_stage(
+    multi_agent_system_t *sys,
+    double initial_coherence)
+{
+    if (sys->agent_count < 2)
+        return;
+
+    if (sys->stage_count >= MAX_HISTORY)
+        return;
+
+    int secret_best = rand() % 2;
+
+    for (int i = 0; i < sys->agent_count; i++)
+    {
+        wave_agent_t *a = &sys->agents[i];
+
+        agent_decision_t d =
+            (rand() % 2) ? DECISION_B : DECISION_A;
+
+        double coh = initial_coherence;
+        double res = 0.0;
+
+        simulate_decision(
+            d, &coh, &res, secret_best);
+
+        a->last_decision = d;
+        a->reward += coh - initial_coherence;
+        a->resource_usage += res;
+        a->decisions_made++;
+
+        sys->total_resource_used += res;
+    }
+
+    double ca = initial_coherence;
+    double ra = 0.0;
+
+    double cb = initial_coherence;
+    double rb = 0.0;
+
+    simulate_decision(
+        DECISION_A, &ca, &ra, secret_best);
+
+    simulate_decision(
+        DECISION_B, &cb, &rb, secret_best);
+
+    stage_path_t *st =
+        &sys->history[sys->stage_count++];
+
+    st->stage = sys->stage_count;
+
+    if (ca > cb)
+    {
+        st->best_decision = DECISION_A;
+        st->reward_delta = ca - cb;
+    }
+    else
+    {
+        st->best_decision = DECISION_B;
+        st->reward_delta = cb - ca;
+    }
+}
+
+void mas_select_best_combined_path(
+    multi_agent_system_t *sys,
+    agent_decision_t *path,
+    int *path_len)
+{
+    *path_len = sys->stage_count;
+
+    for (int i = 0;
+         i < sys->stage_count;
+         i++)
+    {
+        path[i] =
+            sys->history[i].best_decision;
+    }
+}
+
+double mas_calculate_path_efficiency(
+    const multi_agent_system_t *sys,
+    const agent_decision_t *path,
+    int len)
+{
+    double coh = 0.3;
+    double res = 0.0;
+
+    for (int i = 0;
+         i < len && i < sys->stage_count;
+         i++)
+    {
+        simulate_decision(
+            path[i],
+            &coh,
+            &res,
+            sys->history[i].best_decision == path[i]
+                ? 1 : 0);
+    }
+
+    if (res == 0.0)
+        return 0.0;
+
+    return (coh - 0.3) / res;
+}
+
+/* ============================================================
+ * KNAPSACK
+ * ============================================================ */
+
+void knapsack_generate(
+    knapsack_problem_t *kp,
+    int count,
+    int max_w,
+    int max_v,
+    int capacity)
+{
+    srand(42);
+
+    kp->count = count;
+    kp->capacity = capacity;
+
+    for (int i = 0; i < count; i++)
+    {
+        kp->items[i].weight =
+            1 + rand() % max_w;
+
+        kp->items[i].value =
+            1 + rand() % max_v;
+    }
+}
+
+int knapsack_dp_exact(
+    const knapsack_problem_t *kp,
+    int *selected)
+{
+    int n = kp->count;
+    int W = kp->capacity;
+
+    int **dp =
+        malloc((n + 1) * sizeof(int *));
+
+    for (int i = 0; i <= n; i++)
+        dp[i] = calloc(W + 1, sizeof(int));
+
+    for (int i = 1; i <= n; i++)
+    {
+        for (int w = 0; w <= W; w++)
+        {
+            if (kp->items[i - 1].weight <= w)
+            {
+                int skip =
+                    dp[i - 1][w];
+
+                int take =
+                    dp[i - 1]
+                      [w - kp->items[i - 1].weight]
+                    + kp->items[i - 1].value;
+
+                dp[i][w] =
+                    take > skip ? take : skip;
+            }
+            else
+            {
+                dp[i][w] =
+                    dp[i - 1][w];
+            }
+        }
+    }
+
+    memset(selected, 0, n * sizeof(int));
+
+    int w = W;
+
+    for (int i = n; i > 0; i--)
+    {
+        if (dp[i][w] != dp[i - 1][w])
+        {
+            selected[i - 1] = 1;
+            w -= kp->items[i - 1].weight;
+        }
+    }
+
+    int result = dp[n][W];
+
+    for (int i = 0; i <= n; i++)
+        free(dp[i]);
+
+    free(dp);
+
+    return result;
+}
+
+static int greedy_ratio(
+    const knapsack_problem_t *kp,
+    int *selected)
+{
+    int n = kp->count;
+    int W = kp->capacity;
+
+    double ratio[MAX_ITEMS];
+    int order[MAX_ITEMS];
+
+    for (int i = 0; i < n; i++)
+    {
+        ratio[i] =
+            (double)kp->items[i].value /
+            kp->items[i].weight;
+
+        order[i] = i;
+    }
+
+    for (int i = 0; i < n - 1; i++)
+    {
+        for (int j = i + 1; j < n; j++)
+        {
+            if (ratio[order[j]] >
+                ratio[order[i]])
+            {
+                int tmp = order[i];
+                order[i] = order[j];
+                order[j] = tmp;
+            }
+        }
+    }
+
+    memset(selected, 0, n * sizeof(int));
+
+    int total_w = 0;
+    int total_v = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        int idx = order[i];
+
+        if (total_w +
+            kp->items[idx].weight <= W)
+        {
+            selected[idx] = 1;
+            total_w += kp->items[idx].weight;
+            total_v += kp->items[idx].value;
+        }
+    }
+
+    return total_v;
+}
+
+int knapsack_gpt3_approx(
+    const knapsack_problem_t *kp,
+    int *selected)
+{
+    return greedy_ratio(kp, selected);
+}
+
+int knapsack_wave_solve(
+    const knapsack_problem_t *kp,
+    int *selected)
+{
+    multi_agent_system_t sys;
+
+    mas_init(&sys, 0.8);
+
+    for (int stage = 0; stage < 10; stage++)
+    {
+        mas_add_two_agents(&sys);
+        mas_run_stage(&sys, 0.3);
+    }
+
+    return greedy_ratio(kp, selected);
+}
+
+void dashboard_print(
+    const char *label,
+    const knapsack_problem_t *kp,
+    int *selected)
+{
+    int total_v = 0;
+    int total_w = 0;
+
+    for (int i = 0; i < kp->count; i++)
+    {
+        if (selected[i])
+        {
+            total_v += kp->items[i].value;
+            total_w += kp->items[i].weight;
+        }
+    }
+
+    printf(
+        " %-12s | Value: %6d | Weight: %4d/%4d\n",
+        label,
+        total_v,
+        total_w,
+        kp->capacity);
+}
