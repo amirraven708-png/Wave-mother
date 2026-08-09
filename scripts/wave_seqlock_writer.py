@@ -1,4 +1,4 @@
-import os, mmap, ctypes, struct
+import os, mmap, ctypes
 from typing import Dict, Union
 
 class TrajectoryBoundary(ctypes.Structure):
@@ -23,17 +23,21 @@ class TrajectorySharedState(ctypes.Structure):
     ]
 
 class WaveSharedWriter:
-    def __init__(self, filepath: str = "/tmp/wave_shm.dat", max_nodes: int = 256):
+    def __init__(self, filepath: str = None, max_nodes: int = 256):
+        if filepath is None:
+            filepath = os.path.join(os.path.expanduser("~"), "wave_shm.dat")
         self.filepath = filepath
         self.size = ctypes.sizeof(TrajectorySharedState)
+        self._fd = None
+        self._mmap = None
+        self.state = None
         self._init_mmap()
 
     def _init_mmap(self):
-        fd = os.open(self.filepath, os.O_CREAT | os.O_RDWR)
-        os.ftruncate(fd, self.size)
-        self.mmap_obj = mmap.mmap(fd, self.size, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
-        self.state = TrajectorySharedState.from_buffer(self.mmap_obj)
-        os.close(fd)
+        self._fd = os.open(self.filepath, os.O_CREAT | os.O_RDWR)
+        os.ftruncate(self._fd, self.size)
+        self._mmap = mmap.mmap(self._fd, self.size, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
+        self.state = TrajectorySharedState.from_buffer(self._mmap)
 
     def set_active_nodes(self, count: int):
         self.state.active_node_count = count
@@ -43,7 +47,8 @@ class WaveSharedWriter:
             raise ValueError("Node ID out of bounds")
         target = self.state.nodes[node_id]
         seq = target.sequence_counter
-        if seq % 2 != 0: seq += 1
+        if seq % 2 != 0:
+            seq += 1
         target.sequence_counter = seq + 1
         target.data.boundary_id = int(boundary_data.get("boundary_id", 0))
         target.data.min_phase_amplitude = float(boundary_data.get("min_phase_amplitude", 0.0))
@@ -53,5 +58,21 @@ class WaveSharedWriter:
         target.sequence_counter = seq + 2
 
     def close(self):
-        if hasattr(self, 'mmap_obj'):
-            self.mmap_obj.close()
+        # 1. Delete the ctypes struct to release the buffer lock
+        if self.state is not None:
+            del self.state
+            self.state = None
+        # 2. Close the mmap
+        if self._mmap is not None:
+            self._mmap.close()
+            self._mmap = None
+        # 3. Close the file descriptor
+        if self._fd is not None:
+            try:
+                os.close(self._fd)
+            except OSError:
+                pass
+            self._fd = None
+
+    def __del__(self):
+        self.close()

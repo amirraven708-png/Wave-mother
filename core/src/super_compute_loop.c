@@ -9,7 +9,10 @@
 #include <fcntl.h>
 #include "wave_seqlock_memory.h"
 
+#ifndef SHM_FILE
 #define SHM_FILE "/tmp/wave_shm.dat"
+#endif
+
 #define NODE_COUNT 10
 
 typedef struct {
@@ -18,9 +21,14 @@ typedef struct {
 } WaveState;
 
 int main() {
+    char shm_path[256];
+    const char *home = getenv("HOME");
+    if (home) snprintf(shm_path, sizeof(shm_path), "%s/wave_shm.dat", home);
+    else snprintf(shm_path, sizeof(shm_path), SHM_FILE);
+
     printf("[Node-Ring] Booting 10-node fabric...\n");
 
-    int fd = open(SHM_FILE, O_RDONLY);
+    int fd = open(shm_path, O_RDONLY);
     if (fd < 0) {
         perror("[Node-Ring] open – run Python orchestrator first");
         return 1;

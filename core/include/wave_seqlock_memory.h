@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdatomic.h>
 
 typedef struct {
     uint64_t boundary_id;
@@ -31,11 +32,11 @@ static inline bool read_trajectory_boundary(
     SeqlockBoundary *target = &state->nodes[node_id];
 
     do {
-        seq1 = __atomic_load_n(&target->sequence_counter, __ATOMIC_ACQUIRE);
-        if (seq1 & 1) continue;
+        seq1 = atomic_load(&target->sequence_counter);
+        if (seq1 & 1) continue;          // writer active — retry
         *out_data = target->data;
-        seq2 = __atomic_load_n(&target->sequence_counter, __ATOMIC_ACQUIRE);
-    } while (seq1 != seq2);
+        seq2 = atomic_load(&target->sequence_counter);
+    } while (seq1 != seq2);              // writer touched data during copy — retry
 
     return true;
 }

@@ -29,7 +29,8 @@ def heuristic_layer(writer, parser, interval=1.0):
 def main():
     print("🌊 Wave Mother Full Stack")
     parser = WaveMemoryParser(".")
-    writer = WaveSharedWriter("/tmp/wave_shm.dat", 10)
+    shm_path = os.path.join(os.path.expanduser("~"), "wave_shm.dat")
+    writer = WaveSharedWriter(shm_path, 10)
     writer.set_active_nodes(10)
 
     threading.Thread(target=heuristic_layer, args=(writer, parser), daemon=True).start()
