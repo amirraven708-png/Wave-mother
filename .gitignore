@@ -1,0 +1,11 @@
+*.o
+*.a
+*.so
+*.pid
+*.log
+core/bin/*
+!core/bin/.gitkeep
+logs/
+licenses/
+data/generated/
+data/sites/
