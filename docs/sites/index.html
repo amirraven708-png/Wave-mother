@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wave Hosting Platform</title>
+    <style>
+        body { font-family: sans-serif; background:#0a0a1a; color:#ddd; padding:40px; text-align:center; }
+        h1 { color:#00dcff; }
+        .form-box { background:#111; padding:30px; max-width:500px; margin:30px auto; border-radius:12px; }
+        input, textarea { width:100%; padding:10px; margin:10px 0; border:1px solid #333; background:#000; color:#fff; border-radius:6px; }
+        button { background:#00dcff; color:#000; padding:10px 30px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
+        button:hover { background:#00b0d0; }
+        .note { font-size:12px; color:#666; }
+    </style>
+</head>
+<body>
+    <h1>🌊 Wave Hosting</h1>
+    <p>Create your own website on the decentralized Wave Mother network.<br>No servers, no DNS — just rhythm & phase.</p>
+    <div class="form-box">
+        <h2>Create Your Site</h2>
+        <form method="POST" action="/create">
+            <input type="text" name="subdomain" placeholder="yoursite" required pattern="[a-zA-Z0-9]+" maxlength="30">
+            <p class="note">Your site will be live at <strong>yoursite.w.END.d</strong></p>
+            <textarea name="html" rows="10" placeholder="<h1>Hello World</h1>" required></textarea>
+            <button type="submit">Create Site</button>
+        </form>
+    </div>
+    <p style="margin-top:30px;">Already have a site? Visit <strong>yoursite.w.END.d</strong></p>
+</body>
+</html>
