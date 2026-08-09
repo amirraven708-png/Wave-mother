@@ -1,0 +1,45 @@
+name: Wave Mother CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+    - name: Build Dreamland
+      run: |
+        gcc -Wall -O2 -std=c11 -Icore/include \
+          -o core/bin/test_dreamland_full \
+          core/src/dreamland.c core/src/dreamland_wish.c core/src/dreamland_resonance.c \
+          core/src/wave_index.c core/src/test_dreamland_full.c -lm
+
+    - name: Build Mesh Benchmark
+      run: |
+        gcc -Wall -O2 -std=c11 -Icore/include \
+          -o core/bin/benchmark_mesh \
+          core/src/benchmark_mesh.c core/src/wave_index.c -lm
+
+    - name: Build Manifest
+      run: |
+        gcc -Wall -O2 -std=c11 -Icore/include \
+          -o core/bin/test_manifest \
+          core/src/manifest_volumes.c core/src/test_manifest.c -lm
+
+    - name: Test Dreamland
+      run: ./core/bin/test_dreamland_full
+
+    - name: Test Manifest
+      run: ./core/bin/test_manifest
+
+    - name: Test Mesh (P=100)
+      run: ./core/bin/benchmark_mesh 100
