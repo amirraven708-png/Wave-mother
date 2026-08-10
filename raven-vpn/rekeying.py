@@ -121,7 +121,8 @@ def test_rekey_mechanism():
 
     print("Test 2: Chain Rekey")
     old_tx = state.session_keys.tx_key
-    state.perform_chain_rekey()
+    # Do NOT rekey here; test replay with the same session
+    pass # no rekey between tests
     assert old_tx != state.session_keys.tx_key, "Keys must change"
     assert state.chain_counter == 1, "Counter must increment"
     assert state.tx_nonce == 0, "Nonce must reset"
